@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -19,7 +19,7 @@ func main() {
 
 	r.HandleFunc("/", HomeHandler)
 	http.Handle("/", r)
-	http.ListenAndServe(":8000", r)
+	log.Fatal(http.ListenAndServe(":8000", r))
 }
 
 type UserBody struct {
@@ -33,30 +33,44 @@ func UserHandlerPost(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&bodyParsed)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Bad Request")
 		return
 	}
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Succesfully create user with body :%v\n", bodyParsed)
+	log.Printf("Succesfully post user :%v\n", bodyParsed)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(bodyParsed); err != nil {
+		log.Printf("encode failed: %v", err)
+	}
 }
 
 func UserHandlerGet(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	log.Printf("Succesfully get user with id:%v\n", vars)
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Succesfully get user :%v\n", vars["id"])
+	if err := json.NewEncoder(w).Encode(vars); err != nil {
+		log.Printf("encode failed: %v", err)
+	}
 }
 
 func UserHandlerDelete(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
+	log.Printf("Succesfully delete user with id:%v\n", vars)
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Succesfully delete user with id :%v\n", vars["id"])
+	if err := json.NewEncoder(w).Encode(vars); err != nil {
+		log.Printf("encode failed: %v", err)
+	}
 }
 
 func UserHandlerPatch(w http.ResponseWriter, r *http.Request) {
+	log.Printf("We handle Pacho !!!!")
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "We handle Pacho !!!!")
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello"))
+	if _, err := w.Write([]byte("Hello")); err != nil {
+		log.Printf("hello handler failed:")
+	}
 }
