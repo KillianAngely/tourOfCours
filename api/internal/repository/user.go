@@ -1,14 +1,10 @@
 package repository
 
 import (
-	"errors"
-
 	"api/internal/service"
 
 	"github.com/google/uuid"
 )
-
-var ErrUserNotFound = errors.New("user not found")
 
 func (r *InMemoryUserRepo) Create(user service.User) (service.User, error) {
 	r.users[user.ID] = user
@@ -19,7 +15,7 @@ func (r *InMemoryUserRepo) FindByID(id uuid.UUID) (service.User, error) {
 	user, ok := r.users[id]
 	if !ok {
 
-		return service.User{}, ErrUserNotFound
+		return service.User{}, service.ErrUserNotFound
 	}
 	return user, nil
 }
@@ -27,7 +23,7 @@ func (r *InMemoryUserRepo) Update(id uuid.UUID, user service.User) (service.User
 	_, ok := r.users[id]
 	if !ok {
 
-		return service.User{}, ErrUserNotFound
+		return service.User{}, service.ErrUserNotFound
 	}
 	r.users[id] = user
 	return user, nil
@@ -36,7 +32,7 @@ func (r *InMemoryUserRepo) Delete(id uuid.UUID) error {
 	_, ok := r.users[id]
 	if !ok {
 
-		return ErrUserNotFound
+		return service.ErrUserNotFound
 	}
 	delete(r.users, id)
 	return nil
