@@ -13,3 +13,10 @@ type User struct {
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"createdAt"`
 }
+
+type UserRepository interface {
+	Create(user User) (User, error)
+	FindByID(id uuid.UUID) (User, error)
+	Update(id uuid.UUID, user User) (User, error)
+	Delete(id uuid.UUID) error
+}
