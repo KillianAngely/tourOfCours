@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"api/internal/service"
+	"api/internal/domain"
 	"errors"
 	"reflect"
 	"testing"
@@ -10,8 +10,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func newTestUser() service.User {
-	return service.User{
+func newTestUser() domain.User {
+	return domain.User{
 		ID:        uuid.New(),
 		FirstName: "John",
 		LastName:  "Doe",
@@ -19,7 +19,7 @@ func newTestUser() service.User {
 	}
 }
 
-func setupRepoWithUser(t *testing.T) (*InMemoryUserRepo, service.User) {
+func setupRepoWithUser(t *testing.T) (*InMemoryUserRepo, domain.User) {
 	t.Helper()
 
 	r := NewInMemoryUserRepo()
@@ -97,7 +97,7 @@ func TestInMemoryUserRepo(t *testing.T) {
 		}
 
 		_, errFind := r.FindByID(u.ID)
-		if !errors.Is(errFind, service.ErrUserNotFound) {
+		if !errors.Is(errFind, ErrUserNotFound) {
 			t.Fatalf("FindById after Delete: returned an unexpected error: %v", errFind)
 		}
 
@@ -127,7 +127,7 @@ func TestInMemoryUserRepo_NotFoundErrors(t *testing.T) {
 		{
 			name: "Update returns ErrUserNotFound",
 			op: func(r *InMemoryUserRepo, id uuid.UUID) error {
-				_, err := r.Update(id, service.User{})
+				_, err := r.Update(id, domain.User{})
 				return err
 			},
 		},
@@ -138,7 +138,7 @@ func TestInMemoryUserRepo_NotFoundErrors(t *testing.T) {
 			r := NewInMemoryUserRepo()
 			err := tc.op(r, uuid.New())
 
-			if !errors.Is(err, service.ErrUserNotFound) {
+			if !errors.Is(err, ErrUserNotFound) {
 				t.Errorf("Expected ErrUserNotFound, got %v", err)
 			}
 		})

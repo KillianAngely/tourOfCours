@@ -1,29 +1,32 @@
 package repository
 
 import (
-	"api/internal/service"
+	"api/internal/domain"
+	"errors"
 
 	"github.com/google/uuid"
 )
 
-func (r *InMemoryUserRepo) Create(user service.User) (service.User, error) {
+var ErrUserNotFound = errors.New("user not found")
+
+func (r *InMemoryUserRepo) Create(user domain.User) (domain.User, error) {
 	r.users[user.ID] = user
 	return user, nil
 }
 
-func (r *InMemoryUserRepo) FindByID(id uuid.UUID) (service.User, error) {
+func (r *InMemoryUserRepo) FindByID(id uuid.UUID) (domain.User, error) {
 	user, ok := r.users[id]
 	if !ok {
 
-		return service.User{}, service.ErrUserNotFound
+		return domain.User{}, ErrUserNotFound
 	}
 	return user, nil
 }
-func (r *InMemoryUserRepo) Update(id uuid.UUID, user service.User) (service.User, error) {
+func (r *InMemoryUserRepo) Update(id uuid.UUID, user domain.User) (domain.User, error) {
 	_, ok := r.users[id]
 	if !ok {
 
-		return service.User{}, service.ErrUserNotFound
+		return domain.User{}, ErrUserNotFound
 	}
 	r.users[id] = user
 	return user, nil
@@ -32,7 +35,7 @@ func (r *InMemoryUserRepo) Delete(id uuid.UUID) error {
 	_, ok := r.users[id]
 	if !ok {
 
-		return service.ErrUserNotFound
+		return ErrUserNotFound
 	}
 	delete(r.users, id)
 	return nil
@@ -40,11 +43,11 @@ func (r *InMemoryUserRepo) Delete(id uuid.UUID) error {
 }
 
 type InMemoryUserRepo struct {
-	users map[uuid.UUID]service.User
+	users map[uuid.UUID]domain.User
 }
 
 func NewInMemoryUserRepo() *InMemoryUserRepo {
 	return &InMemoryUserRepo{
-		users: make(map[uuid.UUID]service.User),
+		users: make(map[uuid.UUID]domain.User),
 	}
 }

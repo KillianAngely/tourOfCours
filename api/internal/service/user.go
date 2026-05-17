@@ -1,26 +1,31 @@
 package service
 
 import (
+	"api/internal/domain"
+	"api/internal/repository"
+
 	"errors"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-var ErrUserNotFound = errors.New("user not found")
+type CreateUserInput struct {
+	FirstName string
+	LastName  string
+	Email     string
+}
 
-type User struct {
-	ID        uuid.UUID `json:"id"`
-	FirstName string    `json:"firstName"`
-	LastName  string    `json:"lastName"`
-	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"createdAt"`
+type UpdateUserInput struct {
+	FirstName string
+	LastName  string
+	Email     string
 }
 
 type UserRepository interface {
-	Create(user User) (User, error)
-	FindByID(id uuid.UUID) (User, error)
-	Update(id uuid.UUID, user User) (User, error)
+	Create(user domain.User) (domain.User, error)
+	FindByID(id uuid.UUID) (domain.User, error)
+	Update(id uuid.UUID, user domain.User) (domain.User, error)
 	Delete(id uuid.UUID) error
 }
 
@@ -32,35 +37,49 @@ func NewUserService(repo UserRepository) *UserService {
 	return &UserService{repo: repo}
 }
 
-func (s *UserService) Create(firstName, lastName, email string) (User, error) {
+func (s *UserService) Create(input CreateUserInput) (domain.User, error) {
 	newUser :=
-		User{
+		domain.User{
 			ID:        uuid.New(),
-			FirstName: firstName,
-			LastName:  lastName,
-			Email:     email,
+			FirstName: input.FirstName,
+			LastName:  input.LastName,
+			Email:     input.Email,
 			CreatedAt: time.Now(),
 		}
 	return s.repo.Create(newUser)
 }
 
-func (s *UserService) FindByID(id uuid.UUID) (User, error) {
-	return s.repo.FindByID(id)
+func (s *UserService) FindByID(id uuid.UUID) (domain.User, error) {
+	user, err := s.repo.FindByID(id)
+	if errors.Is(err, repository.ErrUserNotFound) {
+		return domain.User{}, domain.ErrUserNotFound
+	}
+	if err != nil {
+		return domain.User{}, err
+	}
+	return user, nil
 }
 
-func (s *UserService) Update(id uuid.UUID, user User) (User, error) {
+func (s *UserService) Update(id uuid.UUID, input UpdateUserInput) (domain.User, error) {
 	existing, err := s.repo.FindByID(id)
+	if errors.Is(err, repository.ErrUserNotFound) {
+		return domain.User{}, domain.ErrUserNotFound
+	}
 	if err != nil {
-		return User{}, err
+		return domain.User{}, err
 	}
 
-	existing.FirstName = user.FirstName
-	existing.LastName = user.LastName
-	existing.Email = user.Email
+	existing.FirstName = input.FirstName
+	existing.LastName = input.LastName
+	existing.Email = input.Email
 
 	return s.repo.Update(id, existing)
 }
 
 func (s *UserService) Delete(id uuid.UUID) error {
-	return s.repo.Delete(id)
+	err := s.repo.Delete(id)
+	if errors.Is(err, repository.ErrUserNotFound) {
+		return domain.ErrUserNotFound
+	}
+	return err
 }

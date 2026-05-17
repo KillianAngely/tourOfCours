@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"api/internal/domain"
 	"api/internal/service"
 	"encoding/json"
 	"errors"
@@ -32,7 +33,14 @@ func (h *UserHandler) Post(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	user, err := h.service.Create(bodyParsed.FirstName, bodyParsed.LastName, bodyParsed.Email)
+
+	input := service.CreateUserInput{
+		FirstName: bodyParsed.FirstName,
+		LastName:  bodyParsed.LastName,
+		Email:     bodyParsed.Email,
+	}
+
+	user, err := h.service.Create(input)
 	if err != nil {
 		log.Printf("POST /users - service error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -55,7 +63,7 @@ func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user, err := h.service.FindByID(incomingId)
-	if errors.Is(err, service.ErrUserNotFound) {
+	if errors.Is(err, domain.ErrUserNotFound) {
 		log.Printf("GET /users/%s - not found", incomingId)
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -82,7 +90,7 @@ func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = h.service.Delete(incomingId)
-	if errors.Is(err, service.ErrUserNotFound) {
+	if errors.Is(err, domain.ErrUserNotFound) {
 		log.Printf("DELETE /users/%s - not found", incomingId)
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -105,7 +113,7 @@ func (h *UserHandler) Patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var bodyParsed CreateUserRequest
+	var bodyParsed UpdateUserRequest
 	err = json.NewDecoder(r.Body).Decode(&bodyParsed)
 	if err != nil {
 		log.Printf("PATCH /users/%s - bad request: %v", incomingId, err)
@@ -113,13 +121,14 @@ func (h *UserHandler) Patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedUser := service.User{
+	input := service.UpdateUserInput{
 		FirstName: bodyParsed.FirstName,
 		LastName:  bodyParsed.LastName,
 		Email:     bodyParsed.Email,
 	}
-	user, err := h.service.Update(incomingId, updatedUser)
-	if errors.Is(err, service.ErrUserNotFound) {
+
+	user, err := h.service.Update(incomingId, input)
+	if errors.Is(err, domain.ErrUserNotFound) {
 		log.Printf("PATCH /users/%s - not found", incomingId)
 		w.WriteHeader(http.StatusNotFound)
 		return
