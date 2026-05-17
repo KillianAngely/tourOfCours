@@ -13,7 +13,7 @@ func NewRouter(h *UserHandler) *mux.Router {
 	userRouter.HandleFunc("/{id}", h.Patch).Methods("PATCH")
 	userRouter.HandleFunc("/{id}", h.Delete).Methods("DELETE")
 
-	r.HandleFunc("/", HomeHello).Methods("GET")
+	r.HandleFunc("/", HealthHandler).Methods("GET")
 
 	return r
 }
